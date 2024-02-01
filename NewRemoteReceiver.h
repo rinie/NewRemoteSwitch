@@ -9,6 +9,7 @@
 
 #include <Arduino.h>
 
+
 typedef enum SwitchType {
    off = 0,
     on = 1,
@@ -30,7 +31,8 @@ struct NewRemoteCode {
 	byte dimLevel;				// Dim level [0..15]. Will be available if switchType is dim, on_with_dim or off_with_dim.
 };
 
-#if defined ESP8266 || defined ESP32
+#if 0
+//#if defined ESP8266 || defined ESP32
 #include <functional>
 #define CALLBACK_SIGNATUREH typedef std::function<void(unsigned int period, unsigned long address, unsigned long groupBit, unsigned long unit, unsigned long switchType, boolean dimLevelPresent, byte dimLevel)> NewRemoteReceiverCallBack
 // Type definition for callback function with NewRemoteCode struct as parameter
@@ -43,6 +45,32 @@ struct NewRemoteCode {
 CALLBACK_SIGNATUREH;
 CALLBACK_SIGNATURE_STRUCTH;
 
+#ifdef RADIOLIBSX127X
+// disable direct hw access
+// decode by calling decodePulseGapDuration
+#define hwPinMode(pin, mode) // pinMode(pin, mode)
+#define hwAttachInterrupt(pin, ISR, mode) // attachInterrupt((pin), ISR, mode)
+#define	hwDetachInterrupt(pin) // detachInterrupt(pin)
+#define hwDigitalWrite(pin, value) // digitalWrite(pin, value)
+#define hwSetState(x) state = (x)
+//#define hwReturn(state) return (state)
+#define hwReturn(state) return (0)
+#define hwDelayMicroseconds(duration) delayMicroseconds(duration)
+#define hwSafeDelayMicroseconds(duration) safeDelayMicroseconds(duration)
+#define hwDigitalWriteDelayMicroseconds(pin, value, duration) hwDigitalWrite(pin, value); hwDelayMicroseconds(duration)
+#define hwDigitalWriteSafeDelayMicroseconds(pin, value, duration) hwDigitalWrite(pin, value); hwSafeDelayMicroseconds(duration)
+#else // direct hardware control
+#define hwPinMode(pin, mode) pinMode(pin, mode)
+#define hwAttachInterrupt(pin, ISR, mode) attachInterrupt(pin, ISR, mode)
+#define	hwDetachInterrupt(pin) detachInterrupt(pin)
+#define hwSetState(x) // state = (x)
+#define hwReturn(state) return
+#define hwDigitalWrite(pin, value) digitalWrite(pin, value)
+#define hwDelayMicroseconds(duration) delayMicroseconds(duration)
+#define hwSafeDelayMicroseconds(duration) safeDelayMicroseconds(duration)
+#define hwDigitalWriteDelayMicroseconds(pin, value, duration) hwDigitalWrite(pin, value); hwDelayMicroseconds(duration)
+#define hwDigitalWriteSafeDelayMicroseconds(pin, value, duration) hwDigitalWrite(pin, value); hwSafeDelayMicroseconds(duration)
+#endif
 
 /**
 * See RemoteSwitch for introduction.
@@ -60,7 +88,7 @@ CALLBACK_SIGNATURE_STRUCTH;
 * This is a pure static class, for simplicity and to limit memory-use.
 */
 
-		
+
 class NewRemoteReceiver {
 	public:
 		/**
@@ -78,10 +106,10 @@ class NewRemoteReceiver {
 		 					 - void (*func)(NewRemoteCode receivedCode)
 		*/
 
-		static void init(int8_t interrupt, byte minRepeats, NewRemoteReceiverCallBack callback);		
+		static void init(int8_t interrupt, byte minRepeats, NewRemoteReceiverCallBack callback);
 
 		// Overload init() to support a callback function with NewRemoteCode struct as parameter
-		static void init(int8_t interrupt, byte minRepeats, NewRemoteReceiverCallBackStruct callback);  
+		static void init(int8_t interrupt, byte minRepeats, NewRemoteReceiverCallBackStruct callback);
 
 		/**
 		* Enable decoding. No need to call enable() after init().
@@ -111,11 +139,15 @@ class NewRemoteReceiver {
 		* @return boolean If after waitMillis no signal was being processed, returns false. If before expiration a signal was being processed, returns true.
 		*/
 		static boolean isReceiving(int waitMillis = 150);
+#ifdef RADIOLIBSX127X
+		static int decodePulseGapDuration(const unsigned int duration);
+#else
 
 		/**
 		 * Called every time the signal level changes (high to low or vice versa). Usually called by interrupt.
 		 */
 		static void interruptHandler();
+#endif
 
 	private:
 
@@ -123,7 +155,7 @@ class NewRemoteReceiver {
 		volatile static short _state;				// State of decoding process.
 		static byte _minRepeats;
 		static NewRemoteReceiverCallBack _callback;
-		
+
 		static NewRemoteReceiverCallBackStruct _callback_struct; // Variable to store the pointer to callback function with NewRemoteCode struct as parameter
 		static boolean _isCallbackStruct;			// Flag to switch which callback function call at receive code
 

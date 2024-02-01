@@ -1,0 +1,21 @@
+{
+  "name": "NewRemoteSwitch",
+  "description": "Use your Arduino or Raspberry Pi to operate remote radio controlled devices",
+  "keywords": "rf, radio, wireless",
+  "authors":
+  {
+    "name": "Randy Simons"
+  },
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/1technophile/NewRemoteSwitch"
+  },
+  "version": "2.6.2",
+  "frameworks": [
+        "arduino",
+        "energia",
+        "wiringpi"
+  ],
+  "platforms": "*"
+}

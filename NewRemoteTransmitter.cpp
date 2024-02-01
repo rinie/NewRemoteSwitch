@@ -13,7 +13,7 @@ NewRemoteTransmitter::NewRemoteTransmitter(unsigned long address, byte pin, unsi
 	_periodusec = periodusec;
 	_repeats = (1 << repeats) - 1; // I.e. _repeats = 2^repeats - 1
 
-	pinMode(_pin, OUTPUT);
+	hwPinMode(_pin, OUTPUT);
 }
 
 void NewRemoteTransmitter::sendGroup(boolean switchOn) {
@@ -63,14 +63,10 @@ void NewRemoteTransmitter::sendDim(byte unit, byte dimLevel) {
 		_sendBit(false);
 
 		// Switch type 'dim'
-		digitalWrite(_pin, HIGH);
-		delayMicroseconds(_periodusec);
-		digitalWrite(_pin, LOW);
-		delayMicroseconds(_periodusec);
-		digitalWrite(_pin, HIGH);
-		delayMicroseconds(_periodusec);
-		digitalWrite(_pin, LOW);
-		delayMicroseconds(_periodusec);
+		hwDigitalWriteDelayMicroseconds(_pin, HIGH, _periodusec);
+		hwDigitalWriteDelayMicroseconds(_pin, LOW, _periodusec);
+		hwDigitalWriteDelayMicroseconds(_pin, HIGH, _periodusec);
+		hwDigitalWriteDelayMicroseconds(_pin, LOW, _periodusec);
 
 		_sendUnit(unit);
 
@@ -92,14 +88,10 @@ void NewRemoteTransmitter::sendGroupDim(byte dimLevel) {
 		_sendBit(true);
 
 		// Switch type 'dim'
-		digitalWrite(_pin, HIGH);
-		delayMicroseconds(_periodusec);
-		digitalWrite(_pin, LOW);
-		delayMicroseconds(_periodusec);
-		digitalWrite(_pin, HIGH);
-		delayMicroseconds(_periodusec);
-		digitalWrite(_pin, LOW);
-		delayMicroseconds(_periodusec);
+		hwDigitalWriteDelayMicroseconds(_pin, HIGH, _periodusec);
+		hwDigitalWriteDelayMicroseconds(_pin, LOW, _periodusec);
+		hwDigitalWriteDelayMicroseconds(_pin, HIGH, _periodusec);
+		hwDigitalWriteDelayMicroseconds(_pin, LOW, _periodusec);
 
 		_sendUnit(0);
 
@@ -112,10 +104,9 @@ void NewRemoteTransmitter::sendGroupDim(byte dimLevel) {
 }
 
 void NewRemoteTransmitter::_sendStartPulse(){
-	digitalWrite(_pin, HIGH);
-	delayMicroseconds(_periodusec);
-	digitalWrite(_pin, LOW);
-	delayMicroseconds(_periodusec * 10 + (_periodusec >> 1)); // Actually 10.5T insteat of 10.44T. Close enough.
+	hwDigitalWriteDelayMicroseconds(_pin, HIGH, _periodusec);
+	hwDigitalWriteDelayMicroseconds(_pin, LOW,
+		_periodusec * 10 + (_periodusec >> 1)); // Actually 10.5T insteat of 10.44T. Close enough.
 }
 
 void NewRemoteTransmitter::_sendAddress() {
@@ -131,32 +122,22 @@ void NewRemoteTransmitter::_sendUnit(byte unit) {
 }
 
 void NewRemoteTransmitter::_sendStopPulse() {
-	digitalWrite(_pin, HIGH);
-	delayMicroseconds(_periodusec);
-	digitalWrite(_pin, LOW);
-	delayMicroseconds(_periodusec * 40);
+	hwDigitalWriteDelayMicroseconds(_pin, HIGH, _periodusec);
+	hwDigitalWriteDelayMicroseconds(_pin, LOW, _periodusec * 40);
 }
 
 void NewRemoteTransmitter::_sendBit(boolean isBitOne) {
 	if (isBitOne) {
 		// Send '1'
-		digitalWrite(_pin, HIGH);
-		delayMicroseconds(_periodusec);
-		digitalWrite(_pin, LOW);
-		delayMicroseconds(_periodusec * 5);
-		digitalWrite(_pin, HIGH);
-		delayMicroseconds(_periodusec);
-		digitalWrite(_pin, LOW);
-		delayMicroseconds(_periodusec);
+		hwDigitalWriteDelayMicroseconds(_pin, HIGH, _periodusec);
+		hwDigitalWriteDelayMicroseconds(_pin, LOW, _periodusec * 5);
+		hwDigitalWriteDelayMicroseconds(_pin, HIGH, _periodusec);
+		hwDigitalWriteDelayMicroseconds(_pin, LOW, _periodusec);
 	} else {
 		// Send '0'
-		digitalWrite(_pin, HIGH);
-		delayMicroseconds(_periodusec);
-		digitalWrite(_pin, LOW);
-		delayMicroseconds(_periodusec);
-		digitalWrite(_pin, HIGH);
-		delayMicroseconds(_periodusec);
-		digitalWrite(_pin, LOW);
-		delayMicroseconds(_periodusec * 5);
+		hwDigitalWriteDelayMicroseconds(_pin, HIGH, _periodusec);
+		hwDigitalWriteDelayMicroseconds(_pin, LOW, _periodusec);
+		hwDigitalWriteDelayMicroseconds(_pin, HIGH, _periodusec);
+		hwDigitalWriteDelayMicroseconds(_pin, LOW, _periodusec * 5);
 	}
 }

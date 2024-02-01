@@ -9,6 +9,32 @@
 
 #include <Arduino.h>
 
+#ifdef RADIOLIBSX127X
+// disable direct hw access
+// decode by calling decodePulseGapDuration
+#define hwPinMode(pin, mode) // pinMode(pin, mode)
+#define hwAttachInterrupt(pin, ISR, mode) // attachInterrupt((pin), ISR, mode)
+#define	hwDetachInterrupt(pin) // detachInterrupt(pin)
+#define hwDigitalWrite(pin, value) // digitalWrite(pin, value)
+#define hwSetState(x) state = (x)
+//#define hwReturn(state) return (state)
+#define hwReturn(state) return (0)
+#define hwDelayMicroseconds(duration) delayMicroseconds(duration)
+#define hwSafeDelayMicroseconds(duration) safeDelayMicroseconds(duration)
+#define hwDigitalWriteDelayMicroseconds(pin, value, duration) hwDigitalWrite(pin, value); hwDelayMicroseconds(duration)
+#define hwDigitalWriteSafeDelayMicroseconds(pin, value, duration) hwDigitalWrite(pin, value); hwSafeDelayMicroseconds(duration)
+#else // direct hardware control
+#define hwPinMode(pin, mode) pinMode(pin, mode)
+#define hwAttachInterrupt(pin, ISR, mode) attachInterrupt(pin, ISR, mode)
+#define	hwDetachInterrupt(pin) detachInterrupt(pin)
+#define hwSetState(x) // state = (x)
+#define hwReturn(state) //return (state)
+#define hwDigitalWrite(pin, value) digitalWrite(pin, value)
+#define hwDelayMicroseconds(duration) delayMicroseconds(duration)
+#define hwSafeDelayMicroseconds(duration) safeDelayMicroseconds(duration)
+#define hwDigitalWriteDelayMicroseconds(pin, value, duration) hwDigitalWrite(pin, value); hwDelayMicroseconds(duration)
+#define hwDigitalWriteSafeDelayMicroseconds(pin, value, duration) hwDigitalWrite(pin, value); hwSafeDelayMicroseconds(duration)
+#endif
 
 /**
 * NewRemoteTransmitter provides a generic class for simulation of common RF remote controls, like the A-series
@@ -67,7 +93,7 @@ class NewRemoteTransmitter {
 		 * @param dimLevel  [0..15] Dim level. 0 for off, 15 for brightest level.
 		 */
 		void sendDim(byte unit, byte dimLevel);
-		
+
 		/**
 		 * Send dim value the current address group. This will also switch on the device.
 		 * Note that low bound can be limited on the dimmer itself. Setting a dimLevel of 0
