@@ -106,6 +106,10 @@ int NewRemoteReceiver::decodePulseGapDuration(const unsigned int duration) {
 	static NewRemoteCode previousCode;		// Contains previous received code
 	static byte repeats = 0;		// The number of times the an identical code is received in a row.
 	static unsigned int min1Period, max1Period, min5Period, max5Period;
+	if (duration == 0) { // external reset at end
+		RESET_STATE;
+		hwReturn(0);
+	}
 #else
 void RECEIVE_ATTR NewRemoteReceiver::interruptHandler() {
 	// This method is written as compact code to keep it fast. While breaking up this method into more
@@ -163,13 +167,13 @@ void RECEIVE_ATTR NewRemoteReceiver::interruptHandler() {
 			max5Period = receivedCode.period * 8; // Upper limit for 5 periods is 8 times measured period
 		}
 		else {
-			hwReturn(_state);
+			hwReturn(0);
 		}
 	} else if (_state == 0) { // Verify start bit part 1 of 2
 		// Duration must be ~1T
 		if (duration > max1Period) {
 			RESET_STATE;
-			hwReturn(_state);
+			hwReturn(0);
 		}
 		// Start-bit passed. Do some clean-up.
 		receivedCode.address = receivedCode.unit = receivedCode.dimLevel = 0;
@@ -177,7 +181,7 @@ void RECEIVE_ATTR NewRemoteReceiver::interruptHandler() {
 		// Duration must be ~10.44T
 		if (duration < 7 * receivedCode.period || duration > 15 * receivedCode.period) {
 			RESET_STATE;
-			hwReturn(_state);
+			hwReturn(0);
 		}
 	} else if (_state < 148) { // state 146 is first edge of stop-sequence. All bits before that adhere to default protocol, with exception of dim-bit
 		receivedBit <<= 1;
@@ -233,16 +237,16 @@ void RECEIVE_ATTR NewRemoteReceiver::interruptHandler() {
 					}
 					// Reset after callback.
 					RESET_STATE;
-					hwReturn(_state);
+					hwReturn(0);
 				}
 
 				// Reset for next round
 				_state=0; // no need to wait for another sync-bit!
-				hwReturn(_state);
+				hwReturn(0);
 		}
 		else { // Otherwise the entire sequence is invalid
 			RESET_STATE;
-			hwReturn(_state);
+			hwReturn(0);
 		}
 
 		if (_state % 4 == 1) { // Last bit part? Note: this is the short version of "if ( (_state-2) % 4 == 3 )"
@@ -268,7 +272,7 @@ void RECEIVE_ATTR NewRemoteReceiver::interruptHandler() {
 						break;
 					default: // Bit was invalid. Abort.
 						RESET_STATE;
-						hwReturn(_state);
+						hwReturn(0);
 				}
 			} else if (_state < 110) {
 				// States 106 - 109 are group bit states.
@@ -281,7 +285,7 @@ void RECEIVE_ATTR NewRemoteReceiver::interruptHandler() {
 						break;
 					default: // Bit was invalid. Abort.
 						RESET_STATE;
-						hwReturn(_state);
+						hwReturn(0);
 				}
 			} else if (_state < 114) {
 				// States 110 - 113 are switch bit states.
@@ -297,7 +301,7 @@ void RECEIVE_ATTR NewRemoteReceiver::interruptHandler() {
 						break;
 					default: // Bit was invalid. Abort.
 						RESET_STATE;
-						hwReturn(_state);
+						hwReturn(0);
 				}
 			} else if (_state < 130){
 				// States 114 - 129 are unit bit states.
@@ -313,7 +317,7 @@ void RECEIVE_ATTR NewRemoteReceiver::interruptHandler() {
 						break;
 					default: // Bit was invalid. Abort.
 						RESET_STATE;
-						hwReturn(_state);
+						hwReturn(0);
 				}
 
 			} else if (_state < 146) {
@@ -332,14 +336,14 @@ void RECEIVE_ATTR NewRemoteReceiver::interruptHandler() {
 						break;
 					default: // Bit was invalid. Abort.
 						RESET_STATE;
-						hwReturn(_state);
+						hwReturn(0);
 				}
 			}
 		}
 	}
 
 	_state++;
-	hwReturn(_state);
+	hwReturn(0);
 }
 
 boolean NewRemoteReceiver::isReceiving(int waitMillis) {
